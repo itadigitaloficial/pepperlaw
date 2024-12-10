@@ -2,8 +2,8 @@ import { FC } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard';
-import { ContractForm } from './components/ContractForm';
 import { ContractEditor } from './pages/ContractEditor';
+import { PDFEditorPage } from './pages/PDFEditorPage';
 
 const queryClient = new QueryClient();
 
@@ -17,13 +17,13 @@ const App: FC = () => {
           </header>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/contracts/new" element={<ContractForm />} />
-            <Route path="/contracts/editor" element={<ContractEditor />} />
+            <Route path="/editor" element={<ContractEditor />} />
+            <Route path="/pdf-editor" element={<PDFEditorPage />} />
           </Routes>
         </div>
       </Router>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;
