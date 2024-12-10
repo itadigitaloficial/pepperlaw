@@ -11,7 +11,8 @@ import {
   AddBox,
   Draw,
   Today,
-  CheckBox
+  CheckBox,
+  History
 } from '@mui/icons-material';
 import { PDFPageManager } from './PDFPageManager';
 import { useHistory } from '../../hooks/useHistory';
@@ -21,6 +22,8 @@ import {
   ValidationError,
   commonValidations 
 } from '../../utils/fieldValidation';
+import { VersionHistory } from '../versions/VersionHistory';
+import { versionService } from '../../services/versionService';
 
 interface PDFEditorProps {
   pdfUrl?: string;
@@ -41,6 +44,7 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
 
   const { 
     state: canvasState,
@@ -211,7 +215,7 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
   };
 
   const handleSave = async () => {
-    if (fabricCanvas) {
+    try {
       const errors = validateAllFields(canvasState.fields);
       
       if (errors.length > 0) {
@@ -221,9 +225,18 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
         return;
       }
 
-      const json = fabricCanvas.toJSON();
+      const json = fabricCanvas?.toJSON();
       // Aqui você pode salvar o estado do canvas no Supabase
       console.log('Canvas state:', json);
+
+      // Criar nova versão
+      await versionService.createVersion(
+        'id',
+        JSON.stringify(json),
+        'Alterações salvas no editor'
+      );
+    } catch (error) {
+      console.error('Erro ao salvar:', error);
     }
   };
 
@@ -311,6 +324,12 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
               Salvar
             </button>
           </Tooltip>
+
+          <Tooltip title="Histórico de Versões">
+            <IconButton onClick={() => setShowVersionHistory(!showVersionHistory)}>
+              <History />
+            </IconButton>
+          </Tooltip>
         </div>
       </div>
 
@@ -328,6 +347,19 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
           <canvas ref={canvasRef} className="absolute top-0 left-0" />
         </div>
       </div>
+
+      {showVersionHistory && (
+        <div className="w-64 bg-gray-100 p-4 border-l">
+          <VersionHistory
+            documentId="id"
+            onRestore={() => {
+              setShowVersionHistory(false);
+              // Recarregar o documento após restaurar
+              // loadDocument();
+            }}
+          />
+        </div>
+      )}
 
       <Snackbar
         open={showError}
