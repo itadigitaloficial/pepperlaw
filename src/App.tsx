@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Dashboard } from './pages/Dashboard';
@@ -7,7 +7,7 @@ import { ContractEditor } from './pages/ContractEditor';
 
 const queryClient = new QueryClient();
 
-function App() {
+const App: FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
