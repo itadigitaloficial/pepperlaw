@@ -205,16 +205,20 @@ class TemplateService {
   async listTemplates(category?: string) {
     let query = supabase
       .from('templates')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .select('*, fields:template_fields(*)');
 
     if (category) {
       query = query.eq('category', category);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.order('created_at', { ascending: false });
+
     if (error) throw error;
-    return data;
+
+    return data.map((template: Template & { fields: TemplateField[] }) => ({
+      ...template,
+      fields: template.fields || [],
+    })) as Template[];
   }
 
   async listCategories(parentId?: string) {
@@ -228,41 +232,38 @@ class TemplateService {
     }
 
     const { data, error } = await query;
+
     if (error) throw error;
-    return data;
+    return data as TemplateCategory[];
   }
 
-  async createDocument(templateId: string, fieldValues: Record<string, any>) {
+  async createDocument(templateId: string, fieldValues: Record<string, string>) {
     const template = await this.getTemplate(templateId);
-    
-    // Substituir campos dinâmicos no conteúdo do template
+    const fields = await this.getTemplateFields(templateId);
+
     let content = template.content;
-    template.fields.forEach((field) => {
+    fields.forEach((field: TemplateField) => {
       const value = fieldValues[field.name] || field.default_value || '';
-      content = content.replace(new RegExp(`{{${field.name}}}`, 'g'), value);
+      content = content.replace(`{{${field.name}}}`, value);
     });
 
-    // Criar novo documento usando o conteúdo processado
-    const { data, error } = await supabase
+    const { data: document, error } = await supabase
       .from('documents')
       .insert([
         {
-          title: `${template.name} - ${new Date().toLocaleDateString()}`,
-          content,
+          name: template.name,
+          content: content,
+          template_id: templateId,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-          owner_id: (await supabase.auth.getUser()).data.user?.id,
-          metadata: {
-            template_id: templateId,
-            field_values: fieldValues,
-          },
         },
       ])
       .select()
       .single();
 
     if (error) throw error;
-    return data;
+    return document;
   }
 
   async deleteTemplate(templateId: string) {
@@ -322,12 +323,16 @@ class TemplateService {
   async searchTemplates(query: string) {
     const { data, error } = await supabase
       .from('templates')
-      .select('*')
+      .select('*, fields:template_fields(*)')
       .or(`name.ilike.%${query}%, description.ilike.%${query}%`)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data as Template[];
+
+    return data.map((template: Template & { fields: TemplateField[] }) => ({
+      ...template,
+      fields: template.fields || [],
+    })) as Template[];
   }
 }
 
