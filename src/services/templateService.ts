@@ -15,17 +15,17 @@ export interface Template {
 }
 
 export interface TemplateField {
-  id: string;
+  id?: string;
   template_id: string;
   name: string;
-  field_type: 'text' | 'number' | 'date' | 'select' | 'boolean';
+  type: string;
   label: string;
   placeholder?: string;
-  default_value?: string;
-  options?: any[];
-  validation_rules?: Record<string, any>;
   required: boolean;
-  order_index: number;
+  default_value?: string;
+  options?: string[];
+  order: number;
+  field_type: 'text' | 'number' | 'date' | 'select' | 'boolean';
 }
 
 export interface TemplateCategory {
@@ -57,7 +57,7 @@ class TemplateService {
       const fieldsWithTemplate = fields.map((field, index) => ({
         ...field,
         template_id: templateData.id,
-        order_index: index,
+        order: index,
       }));
 
       const { error: fieldsError } = await supabase
@@ -101,7 +101,7 @@ class TemplateService {
         const fieldsWithTemplate = fields.map((field, index) => ({
           ...field,
           template_id: templateId,
-          order_index: index,
+          order: index,
         }));
 
         const { error: fieldsError } = await supabase
@@ -128,7 +128,7 @@ class TemplateService {
       .from('template_fields')
       .select('*')
       .eq('template_id', templateId)
-      .order('order_index');
+      .order('order');
 
     if (fieldsError) throw fieldsError;
 
@@ -136,6 +136,70 @@ class TemplateService {
       ...template,
       fields: fields || [],
     };
+  }
+
+  async getTemplateFields(templateId: string) {
+    const { data: fields, error: fieldsError } = await supabase
+      .from('template_fields')
+      .select('*')
+      .eq('template_id', templateId)
+      .order('order');
+
+    if (fieldsError) throw fieldsError;
+
+    return fields as TemplateField[];
+  }
+
+  async addTemplateField(templateId: string, field: Partial<TemplateField>) {
+    const { data, error } = await supabase
+      .from('template_fields')
+      .insert([
+        {
+          ...field,
+          template_id: templateId,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as TemplateField;
+  }
+
+  async updateTemplateField(templateId: string, fieldId: string, field: Partial<TemplateField>) {
+    const { data, error } = await supabase
+      .from('template_fields')
+      .update(field)
+      .eq('id', fieldId)
+      .eq('template_id', templateId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as TemplateField;
+  }
+
+  async deleteTemplateField(templateId: string, fieldId: string) {
+    const { error } = await supabase
+      .from('template_fields')
+      .delete()
+      .eq('id', fieldId)
+      .eq('template_id', templateId);
+
+    if (error) throw error;
+  }
+
+  async reorderTemplateFields(templateId: string, fields: TemplateField[]) {
+    const updates = fields.map((field, index) => ({
+      id: field.id,
+      order: index,
+    }));
+
+    const { error } = await supabase
+      .from('template_fields')
+      .upsert(updates);
+
+    if (error) throw error;
   }
 
   async listTemplates(category?: string) {
@@ -211,8 +275,9 @@ class TemplateService {
   }
 
   async duplicateTemplate(templateId: string) {
-    // Obter o template original
+    // Obter o template original e seus campos
     const original = await this.getTemplate(templateId);
+    const originalFields = await this.getTemplateFields(templateId);
     
     // Criar uma cópia do template
     const { data: newTemplate, error: templateError } = await supabase
@@ -223,7 +288,7 @@ class TemplateService {
           description: original.description,
           content: original.content,
           category: original.category,
-          is_public: false, // A cópia sempre começa como privada
+          is_public: false,
           created_by: (await supabase.auth.getUser()).data.user?.id,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -237,10 +302,10 @@ class TemplateService {
     if (templateError) throw templateError;
 
     // Copiar os campos do template
-    if (original.fields && original.fields.length > 0) {
-      const fieldsWithNewTemplate = original.fields.map((field) => ({
+    if (originalFields.length > 0) {
+      const fieldsWithNewTemplate = originalFields.map((field: TemplateField) => ({
         ...field,
-        id: undefined, // Remover ID para criar novos registros
+        id: undefined,
         template_id: newTemplate.id,
       }));
 
@@ -262,7 +327,7 @@ class TemplateService {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data;
+    return data as Template[];
   }
 }
 

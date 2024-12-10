@@ -120,8 +120,9 @@ export const DocumentList: React.FC = () => {
         {folders.map((folder) => (
           <ListItem
             key={folder.id}
-            button
+            component="div"
             onClick={() => handleItemClick(folder)}
+            sx={{ cursor: 'pointer' }}
             secondaryAction={
               <IconButton
                 edge="end"
@@ -144,8 +145,9 @@ export const DocumentList: React.FC = () => {
         {documents.map((doc) => (
           <ListItem
             key={doc.id}
-            button
+            component="div"
             onClick={() => handleItemClick(doc)}
+            sx={{ cursor: 'pointer' }}
             secondaryAction={
               <IconButton
                 edge="end"

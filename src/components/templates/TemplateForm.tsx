@@ -14,6 +14,7 @@ import {
   Switch,
   FormControlLabel,
   Paper,
+  SelectChangeEvent,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -142,6 +143,13 @@ export const TemplateForm: React.FC<TemplateFormProps> = ({
     }
   };
 
+  const handleCategoryChange = (event: SelectChangeEvent<string>) => {
+    setFormData({
+      ...formData,
+      category: event.target.value,
+    });
+  };
+
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
       <Grid container spacing={3}>
@@ -174,7 +182,7 @@ export const TemplateForm: React.FC<TemplateFormProps> = ({
             <Select
               name="category"
               value={formData.category}
-              onChange={handleInputChange}
+              onChange={handleCategoryChange}
             >
               <MenuItem value="">Sem categoria</MenuItem>
               <MenuItem value="contratos">Contratos</MenuItem>

@@ -116,8 +116,9 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
             {users.map((user) => (
               <ListItem
                 key={user.id}
-                button
+                component="div"
                 onClick={() => handleUserSelect(user)}
+                sx={{ cursor: 'pointer' }}
               >
                 <ListItemText primary={user.email} />
               </ListItem>
