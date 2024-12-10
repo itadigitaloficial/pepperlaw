@@ -78,7 +78,7 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
       type: obj.type,
       label: obj.text || '',
       value: obj.value || '',
-      validation: obj.validation,
+      validation: obj.data?.validation,
       x: obj.left,
       y: obj.top,
       width: obj.width,
@@ -102,9 +102,11 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
         fontSize: 16,
         fill: '#000000',
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        validation: {
-          required: true,
-          minLength: 3,
+        data: {
+          validation: {
+            required: true,
+            minLength: 3,
+          },
         },
       });
 
@@ -137,8 +139,10 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
       const group = new fabric.Group([rect, text], {
         selectable: true,
         hasControls: true,
-        validation: {
-          required: true,
+        data: {
+          validation: {
+            required: true,
+          },
         },
       });
 
@@ -158,9 +162,11 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
         fontSize: 16,
         fill: '#000000',
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        validation: {
-          required: true,
-          pattern: commonValidations.date.pattern,
+        data: {
+          validation: {
+            required: true,
+            pattern: commonValidations.date.pattern,
+          },
         },
       });
 
@@ -182,8 +188,10 @@ export const PDFEditor: React.FC<PDFEditorProps> = ({ pdfUrl }) => {
         fill: 'transparent',
         stroke: '#000000',
         strokeWidth: 1,
-        validation: {
-          required: true,
+        data: {
+          validation: {
+            required: true,
+          },
         },
       });
 
